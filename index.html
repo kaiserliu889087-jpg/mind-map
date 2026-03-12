@@ -1,12 +1,881 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My New Webpage</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>帝國的計算｜心智圖</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;700;900&family=Noto+Sans+TC:wght@300;400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#10101a;--bg2:#14141f;--border:#28283c;--border2:#343450;
+  --text:#e0dcd2;--text2:#a8a49a;--text3:#686875;
+  --white:#f6f2e8;--gold:#d8b040;--gold2:#b08830;
+  --ct:#4a7a58;--ce:#5060a0;--cem:#9a7830;--cb:#984848;
+  --cbi:#487878;--cm:#386888;--cp:#783838;--cpo:#7a6828;
+  --cbo:#386058;--cbu:#685878;--cco:#885038;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Noto Serif TC',serif}
+
+/* ─── HEADER ─── */
+#header{
+  position:fixed;top:0;left:0;right:0;height:56px;
+  background:rgba(5,5,7,0.97);border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;padding:0 20px;gap:20px;z-index:500;
+}
+#header h1{font-size:20px;font-weight:900;color:var(--white);letter-spacing:-0.02em}
+#header p{font-family:'Courier Prime',monospace;font-size:10px;color:var(--text3);letter-spacing:0.2em;text-transform:uppercase}
+.rainbow{position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--ct),var(--ce),var(--cem),var(--cb),var(--cbi),var(--cm),var(--cp),var(--cpo),var(--cbo),var(--cbu),var(--cco))}
+
+/* ─── HELP ─── */
+#help{
+  position:fixed;top:56px;left:0;right:0;height:30px;
+  background:#08080c;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:24px;z-index:499;
+}
+.hint{font-family:'Courier Prime',monospace;font-size:10px;color:var(--text3);letter-spacing:0.12em;display:flex;align-items:center;gap:6px}
+.hint span{color:var(--gold2)}
+
+/* ─── MAIN SCROLL AREA ─── */
+#stage{
+  position:fixed;top:86px;left:0;right:0;bottom:0;
+  overflow:auto;cursor:grab;
+}
+#stage:active{cursor:grabbing}
+
+/* ─── SVG CANVAS ─── */
+#canvas{display:block}
+
+/* ─── DETAIL PANEL ─── */
+#panel{
+  position:fixed;right:-480px;top:86px;bottom:0;width:460px;
+  background:#08080e;border-left:1px solid var(--border2);
+  transition:right .25s cubic-bezier(.4,0,.2,1);
+  z-index:600;overflow-y:auto;
+}
+#panel.open{right:0}
+#panel-band{height:3px;background:var(--gold)}
+#panel-header{padding:22px 22px 16px;border-bottom:1px solid var(--border)}
+#panel-col{font-family:'Courier Prime',monospace;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+#panel-era{font-family:'Courier Prime',monospace;font-size:11px;color:var(--text3);letter-spacing:0.1em;margin-bottom:10px}
+#panel-title{font-size:24px;font-weight:700;color:var(--white);letter-spacing:-0.02em;line-height:1.2;margin-bottom:4px}
+#panel-en{font-family:'Courier Prime',monospace;font-size:12px;color:var(--text3);letter-spacing:0.05em;margin-bottom:12px}
+#panel-icon{display:flex;justify-content:center;padding:16px 0;border-bottom:1px solid var(--border)}
+#panel-icon svg{width:80px;height:80px}
+#panel-body{padding:18px 22px}
+#panel-desc{font-family:'Noto Sans TC',sans-serif;font-size:14px;color:var(--text2);line-height:1.9;margin-bottom:18px}
+.pfact{border:1px solid var(--border);padding:10px 12px;margin-bottom:8px;background:rgba(255,255,255,0.015)}
+.pfact-lbl{font-family:'Courier Prime',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
+.pfact-val{font-family:'Noto Sans TC',sans-serif;font-size:13px;color:var(--text);line-height:1.6}
+.pconn-lbl{font-family:'Courier Prime',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text3);margin-top:16px;margin-bottom:8px}
+.pconn-wrap{display:flex;flex-wrap:wrap;gap:5px}
+.pconn{font-family:'Courier Prime',monospace;font-size:10px;padding:3px 9px;border:1px solid var(--border2);color:var(--text3);letter-spacing:0.1em;cursor:pointer}
+.pconn:hover{color:var(--text);border-color:var(--text3)}
+#panel-close{
+  position:absolute;top:14px;right:14px;width:28px;height:28px;
+  border:1px solid var(--border2);background:transparent;cursor:pointer;
+  color:var(--text3);font-size:13px;display:flex;align-items:center;justify-content:center;
+}
+#panel-close:hover{color:var(--white);border-color:var(--text2)}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+</style>
 </head>
 <body>
-    <h1>Hello, World!</h1>
-    <p>This is a basic HTML file.</p>
+
+<div id="header">
+  <div>
+    <h1>帝國的計算｜心智圖</h1>
+    <p>Kate Crawford &amp; Vladan Joler, 2023 ── Classification &amp; Control 分類與控制</p>
+  </div>
+  <div class="rainbow"></div>
+</div>
+
+<div id="help">
+  <div class="hint">⊙ <span>點擊節點</span> → 展開說明</div>
+  <div class="hint">↔ <span>左右捲動</span> → 瀏覽11欄</div>
+  <div class="hint">↕ <span>上下捲動</span> → 追蹤歷史</div>
+  <div class="hint">◈ <span>菱形=關鍵節點</span>　○ <span>圓=系統/過程</span>　△ <span>三角=層級</span>　⬡ <span>六邊=網絡/身體</span></div>
+</div>
+
+<div id="stage">
+  <svg id="canvas"></svg>
+</div>
+
+<div id="panel">
+  <div id="panel-band"></div>
+  <button id="panel-close" onclick="closePanel()">✕</button>
+  <div id="panel-header">
+    <div id="panel-col"></div>
+    <div id="panel-era"></div>
+    <div id="panel-title"></div>
+    <div id="panel-en"></div>
+  </div>
+  <div id="panel-icon"><svg id="panel-svg-icon" viewBox="0 0 80 80" fill="none"></svg></div>
+  <div id="panel-body">
+    <div id="panel-desc"></div>
+    <div id="panel-facts"></div>
+    <div id="panel-connections"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+const COLS = [
+  {id:'t',  zh:'時間',      en:'Time',                 color:'#4a7a58'},
+  {id:'e',  zh:'教育',      en:'Education',            color:'#5060a0'},
+  {id:'em', zh:'情感與智識',en:'Emotions & Intel.',    color:'#9a7830'},
+  {id:'b',  zh:'人體',      en:'Human Bodies',         color:'#984848'},
+  {id:'bi', zh:'生物特徵識別',en:'Biometrics',          color:'#487878'},
+  {id:'m',  zh:'醫療',      en:'Medical',              color:'#386888'},
+  {id:'p',  zh:'監獄',      en:'Prison',               color:'#783838'},
+  {id:'po', zh:'警務',      en:'Policing',             color:'#7a6828'},
+  {id:'bo', zh:'邊境',      en:'Borders',              color:'#386058'},
+  {id:'bu', zh:'官僚體制',  en:'Bureaucracy',          color:'#685878'},
+  {id:'co', zh:'殖民主義',  en:'Colonialism',          color:'#885038'},
+];
+
+const ERAS = [
+  {id:'e1', zh:'第一紀　近代早期', en:'1500–1700', color:'#4a7a58',
+   nodes:{
+    t:  [{shape:'circle',zh:'教會時間・農業時間',en:'Ecclesiastical & Agricultural Time',
+          desc:'修道院報時鐘聲（canonical hours）規範日常作息；農業季節週期與宗教節慶曆法是普通人唯一的時間框架——時間由上帝與自然界定，而非由資本控制。機械塔鐘14世紀起在歐洲城市普及，時間的客觀化（從質感時間到量化時間）開啟了對人類活動進行精確計量的歷史可能性。',
+          facts:[['類型','自然時間 / 宗教時間'],['關鍵裝置','修道院鐘聲・日晷・沙漏・機械鐘'],['影響','為工廠時間的到來預備了認知基礎']],
+          links:['工廠時間','泰勒主義']}],
+    e:  [{shape:'triangle',zh:'以學校拯救靈魂',en:'Saving Souls with School',
+          desc:'耶穌會（1540年成立）及其他傳教士在美洲、亞洲、非洲建立殖民地學校，以教育為工具消滅原住民語言、宗教與文化認同——這是現代教育制度的殖民地原型。原住民兒童被強制帶離家庭進入寄宿學校，「文明化使命（Civilizing Mission）」以教育語言包裝對原住民知識體系的系統性毀滅。',
+          facts:[['發起者','耶穌會 (1540) / 多明我會'],['核心邏輯','文明化使命 (Civilizing Mission)'],['影響延伸','加拿大寄宿學校制度延續至1990年代']],
+          links:['企業殖民主義','血統純正','殖民地勞改設施']}],
+    em: [{shape:'diamond',zh:'體液時代・感受道德',en:'Era of Humors / Feeling Moral',
+          desc:'古希臘蓋倫（Galen）的四體液學說（血液=活潑、黏液=冷靜、黃膽汁=易怒、黑膽汁=憂鬱）：情感被解讀為體液比例的化學現象，以身體管理情感的「計算」框架的最初形態。道德哲學將特定情感（謙遜、敬畏）定義為美德，另一些（傲慢、慾望）定義為罪惡；宗教機構最早將情感「分類」並賦予道德等級。',
+          facts:[['理論框架','四體液說（Humorism）'],['代表人物','蓋倫（Galen）・希波克拉底'],['分類邏輯','情感=體液失衡的症狀']],
+          links:['情感分類學','FACS面部編碼','AI情感識別']}],
+    b:  [{shape:'hexagon',zh:'血統純正',en:'Limpieza de Sangre / Purity of Blood',
+          desc:'西班牙宗教裁判所（1449年起）以「血統純正（Limpieza de Sangre）」作為法律身份依據：摩爾人、猶太人的後裔即使已皈依天主教仍受歧視；這是現代「種族」概念最早的法律化形態。殖民者以殖民地剝削為手段：原住民身體被定義為低等、可支配的，白人男性凝視建構了對非歐洲身體的性化與貶低。',
+          facts:[['起源地','西班牙（托雷多, 1449）'],['法律工具','宗教裁判所（Spanish Inquisition）'],['概念遺產','現代「種族」概念的法律化先例']],
+          links:['種族作為分類學概念','優生學','CRISPR']}],
+    bi: [{shape:'diamond',zh:'面相學・分類目錄',en:'Physiognomy / Cataloging',
+          desc:'藉由臉部特徵判斷人格道德；外貌與「危險性」掛鉤，為後來的犯罪人類學奠定意識形態基礎。殖民者同時對土地、生物、人類族群進行系統性分類；知識即控制的帝國認識論確立，為後來生物特徵識別技術的發展鋪路。',
+          facts:[['代表人物','約翰·卡斯帕·拉瓦特（Lavater）'],['偽科學基礎','面部=內在性格的可讀外顯'],['延伸影響','貝蒂永系統・犯罪人類學']],
+          links:['貝蒂永系統','犯罪人類學','AI情感識別']}],
+    m:  [{shape:'circle',zh:'解剖劇場・體液說',en:'Anatomical Theaters / Bodily Fluids',
+          desc:'公開解剖展演作為醫學知識生產儀式；屍體主要取自被處決的罪犯，醫學凝視與法律懲罰在此首次融合。四體液說作為支配性醫學框架，以量化方式管理身體是最早的「身體計算」形態。早期醫療記錄確立了「身體數據屬於醫療機構而非個人」的先例。',
+          facts:[['代表機構','帕多瓦解剖劇場（1594年建）'],['屍體來源','主要為被處決的罪犯'],['知識融合','醫學凝視 + 法律懲罰的首次結合']],
+          links:['電子健康記錄','ETB','DNA-4基因組庫']}],
+    p:  [{shape:'square',zh:'社會契約前的懲罰',en:'Pre-Social Contract Punishment',
+          desc:'公開肢解、烙印、示眾：懲罰作為主權力量的炫示，尚無監獄作為制度。傅柯在《規訓與懲罰》中以酷刑作為分析起點：懲罰是主權者對臣民肉體的直接書寫，而非對靈魂的改造。習藝所（Workhouses）以強制勞動為矯正手段，是制度化拘禁的最早形態。',
+          facts:[['理論化','傅柯《規訓與懲罰》（1975）'],['前現代形式','公開肢解・烙印・示眾・斷肢'],['早期機構','英國習藝所（Workhouses）']],
+          links:['全景敞視監獄','滅絕營','監獄工業複合體']}],
+    po: [{shape:'diamond',zh:'保護作為商品',en:'Protection as Commodity',
+          desc:'安全保護由私人傭兵、貿易公司提供；安全是可買賣的商品而非公共服務。東印度公司的私人安保力量是最早的企業警察。都市夜警制度（Night Watch）是現代都市警務的前身，主要功能是管控貧民與流動人口。',
+          facts:[['形式','私人傭兵・夜警・行會自衛'],['邏輯','安全 = 可購買的商品'],['現代延伸','私人保安產業・Palantir']],
+          links:['現代警察制度','預測性警務','算法行政']}],
+    bo: [{shape:'square',zh:'西發里亞主權（1648）',en:'Westphalian Sovereignty',
+          desc:'三十年戰爭後主權國家體系確立（1648年西發里亞和約）；邊境作為法律現實登場，民族國家對領土及人口取得排他性控制權。圈地運動（Enclosure Movement）同期將英國公有地系統性私有化，農民失去土地，「人口的流動性管理」成為邊境控制的早期國內實踐。',
+          facts:[['關鍵事件','西發里亞和約（1648）'],['理論確立','主權平等・不干涉內政原則'],['國內版本','圈地運動 → 流動人口管理']],
+          links:['民族國家的形成','現代護照','歐洲堡壘']}],
+    bu: [{shape:'square',zh:'王朝行政記錄',en:'Dynastic Administrative Records',
+          desc:'稅收登記冊、人口普查：官僚體制作為帝國管理工具的早期形態，書面文件成為治理的基本媒介。麥卡托投影（1569）放大歐洲與北方大陸視覺比例；空間表徵本身即是殖民主義意識形態的編碼。',
+          facts:[['核心工具','稅收冊・人口普查・地籍圖'],['地圖政治','麥卡托投影（1569）扭曲全球比例'],['技術基礎','書寫・印刷機・標準化計量']],
+          links:['韋伯式官僚體制','社會安全號碼','算法行政']}],
+    co: [{shape:'triangle',zh:'企業殖民主義・大規模死亡',en:'Corporate Colonialism / Great Dying',
+          desc:'荷蘭東印度公司（VOC, 1602）、英國東印度公司（EIC, 1600）獲授司法、軍事與行政控制權；企業帝國的最初形態。歐洲擴張導致美洲原住民人口銳減約90%（大規模死亡，Great Dying）；是有史以來最大規模的人口崩潰，也是最早的技術性種族滅絕。',
+          facts:[['企業帝國','英國EIC (1600)・荷蘭VOC (1602)'],['死亡規模','美洲原住民減少約90%（5600萬人）'],['現代對應','科技平台帝國主義（Meta・Google）']],
+          links:['瓜分非洲','新殖民主義','技術捕獲']}],
+   }
+  },
+  {id:'e2', zh:'第二紀　啟蒙與工業革命', en:'1750–1850', color:'#5060a0',
+   nodes:{
+    t:  [{shape:'square',zh:'工廠時間・鐘錶紀律',en:'Factory Time / Clock Discipline',
+          desc:'工業革命使工廠鐘錶成為新的主人；湯普森（E.P. Thompson）所記錄的「時間紀律」：工人的身體被訓練服從機器時間，遲到被視為道德失範。格林威治標準時間（GMT）1884年確立，以英國帝國地理中心成為全人類時間起點——時間標準化即帝國標準化。',
+          facts:[['關鍵文本','E.P.湯普森《時間、工作紀律與工業資本主義》（1967）'],['GMT確立','1884年華盛頓子午線會議'],['邏輯','遲到 = 道德罪行 = 工資扣減']],
+          links:['泰勒主義','福特主義','24/7經濟']}],
+    e:  [{shape:'triangle',zh:'公共教育・民族國家建設',en:'Public Education as Nation-Building',
+          desc:'法國（1789年後）、普魯士（1810年代）建立國家公共教育系統；教育作為製造「好公民」的工廠，標準化語言（消滅地區方言）、歷史敘事（民族神話）與效忠心理。蘭開斯特/貝爾監測系統以一名教師通過「監察員」學生管理數百名學生，是教育工業化的先驅。',
+          facts:[['普魯士模式','義務教育（1819）→ 全球擴散'],['監測系統','蘭開斯特系統（1798）= 教育工廠'],['課程邏輯','標準語言 + 民族歷史 + 服從紀律']],
+          links:['大規模教學','教育產業化','AI教育科技']}],
+    em: [{shape:'diamond',zh:'情感分類學・顱相學',en:'Emotional Taxonomies / Phrenology',
+          desc:'達爾文《人類與動物的情感表達》（1872）：情感被生物學化、分類化，「基本情感」（恐懼、憤怒、喜悅等）的概念確立，情感成為可觀察、可測量的客體。高爾（Gall）等人主張腦部特定區域控制特定情感與智力；顱相學以顱骨形態「讀取」人格，開啟「腦與行為直接對應」的問題框架。',
+          facts:[['達爾文','《人類與動物的情感表達》（1872）'],['顱相學','高爾（Gall）・斯布爾茨海姆（Spurzheim）'],['延伸影響','神經科學・FACS・情感AI']],
+          links:['精神測量學','FACS面部編碼','AI情感識別']}],
+    b:  [{shape:'hexagon',zh:'種族作為分類學概念',en:'Race as a Taxonomic Concept',
+          desc:'林奈（Linnaeus）《自然系統》（1758）在分類學中將人類按種族分組並賦予等級；種族被「自然化」為客觀的生物分類，為帝國主義殖民地科學提供合法性框架。印度種姓制度在英國殖民統治下被法律化、固化；殖民者利用並強化種姓分類以分而治之，是身體等級制度與官僚統治融合的典型案例。',
+          facts:[['林奈分類','Homo europaeus（白）/ Homo afer（黑）等4種'],['種姓法律化','英國殖民統治固化印度種姓制度'],['科學工具','顱骨指數（Cephalic Index）']],
+          links:['科學種族主義','優生學','CRISPR']}],
+    bi: [{shape:'diamond',zh:'生物統計學誕生・優生學',en:'Birth of Biometry / Eugenics (Galton)',
+          desc:'高爾頓（Galton）建立統計方法量化人類特徵，創立「優生學（Eugenics）」；「常態分佈」被用於定義種族與道德的等級秩序。犯罪人類學興起：朗布羅索提出「天生犯罪人（Homo Criminals）」——犯罪傾向可由身體特徵識別，將不平等的社會結果歸咎為個人「先天退化」。',
+          facts:[['高爾頓','優生學（Eugenics）一詞創造者（1883）'],['朗布羅索','《犯罪人（L\'Uomo Delinquente）》（1876）'],['統計遺產','常態分佈 → 「正常/偏差」的科學化']],
+          links:['指紋學','DNA法醫','活在生物特徵中']}],
+    m:  [{shape:'circle',zh:'科學種族主義・體質人類學',en:'Scientific Racism / Physical Anthropology',
+          desc:'顱骨指數（Cephalic Index）系統化為「科學」種族分類工具；醫學機構授予種族等級論以學術合法性，為殖民剝削、奴隸制提供偽科學依據。Samuel Morton的顱骨收藏被用於「證明」白人智力優越——後來被揭露為數據造假。',
+          facts:[['Morton收藏','900顱骨 → 種族智力等級「科學證明」'],['科學期刊','American Journal of Physical Anthropology（1918）'],['被揭露','Stephen Jay Gould《人類的誤量》（1981）']],
+          links:['WHO（1948）','ETB','DNA-4基因組庫']}],
+    p:  [{shape:'circle',zh:'現代監獄・全景敞視監獄',en:'Modern Prison / Panopticon (Bentham)',
+          desc:'邊沁全景敞視監獄（1791）確立「持續監看以產生自我規訓」的建築邏輯；監禁取代公開處決，福柯以此發展出規訓社會理論。社會契約論（盧梭、洛克）確立懲罰作為社會秩序機制的理論基礎；但「契約」明確排除奴隸、殖民地人口與婦女。',
+          facts:[['邊沁全景敞視','1791年設計，環形建築+中央瞭望塔'],['社會契約','盧梭（1762）・洛克（1689）'],['排除者','奴隸・殖民地人口・婦女 = 無契約保護']],
+          links:['監獄工業複合體','Supermax','監獄輸出層次']}],
+    po: [{shape:'diamond',zh:'現代警察制度誕生（1829）',en:'Birth of Modern Police, London',
+          desc:'倫敦大都會警察局成立（羅伯特·皮爾爵士，1829）；職業化警察力量確立，最初主要針對勞工與都市貧民，愛爾蘭皇家警察（RIC）是殖民地版本。警察制度的「誕生」神話掩蓋了其殖民地起源——英國最早的職業化警察力量部署於愛爾蘭，而非本土。',
+          facts:[['倫敦警察','羅伯特·皮爾爵士（1829）'],['殖民地先例','愛爾蘭皇家警察（RIC, 1822）'],['主要目標','工人・貧民・殖民地被壓迫者']],
+          links:['警察軍事化','COINTELPRO','預測性警務']}],
+    bo: [{shape:'square',zh:'民族國家的形成',en:'Nation-State Formation',
+          desc:'拿破崙戰爭與民族主義重塑歐洲地圖；「國民」身份制度化，「本國人」與「外國人」的法律區分確立。身份文件開始系統化：出生證明、移民文件、旅行許可。強迫移民（契約勞工制度）在奴隸制廢除後延續奴役邏輯——印度、中國勞工被運往種植園。',
+          facts:[['民族主義浪潮','1848年歐洲革命・民族自決原則'],['第一批護照','拿破崙時期的旅行許可證'],['契約勞工','1830-1920年：3700萬人跨海轉移']],
+          links:['現代護照制度','歐洲堡壘','智慧邊境']}],
+    bu: [{shape:'square',zh:'社會統計學・平均人',en:'Social Statistics / L\'Homme Moyen',
+          desc:'凱特勒（Quetelet）提出「平均人（L\'Homme Moyen）」概念（1835）；國家以統計數據管理人口，個人被抽象為可計算的數據點，治理轉變為統計管理。行政系統制度化：郵政、戶籍、財產登記逐步標準化，書面文件成為個人存在的法律依據。',
+          facts:[['凱特勒','《社會物理學》（1835）'],['統計邏輯','個人 → 人口 → 可計算的集合體'],['現代延伸','人口普查・數據庫・算法治理']],
+          links:['社會安全號碼','算法行政','技術科層主義']}],
+    co: [{shape:'triangle',zh:'大西洋奴隸貿易頂峰',en:'Atlantic Slave Trade Peak',
+          desc:'大西洋奴隸貿易頂峰：對人體的所有權、追蹤、編號制度化，直接影響現代生物特徵識別與身份管理思想的構成。廢奴運動（1807英國廢止，1865美國第13修正案）之後，種族主義通過科學話語（優生學、社會達爾文主義）延續。',
+          facts:[['規模','1500-1900年：1250萬非洲人被運往美洲'],['追蹤系統','奴隸名冊・烙印・號碼 = 最早的生物特徵資料庫'],['廢除後','種族主義→科學種族主義→新殖民主義']],
+          links:['新殖民主義','技術捕獲','AI生命政治']}],
+   }
+  },
+  {id:'e3', zh:'第三紀　工業帝國主義', en:'1850–1920', color:'#9a7830',
+   nodes:{
+    t:  [{shape:'square',zh:'泰勒主義・秒錶',en:'Taylorism / Time-Motion Studies (1911)',
+          desc:'弗雷德里克·泰勒（Frederick Taylor）《科學管理原則》（1911）：通過碼錶將每個工作動作分解、量化、優化；工人身體被還原為可優化的機器，時間管理成為剝削的科學武器。格林威治標準時間（1884）將英國帝國地理中心設為全人類時間起點，時間標準化即帝國標準化。',
+          facts:[['泰勒','《科學管理原則》（1911）'],['方法','碼錶計時・動作分解・最優化'],['邏輯','工人的時間 = 資本家的生產成本']],
+          links:['福特主義','即時生產','算法排班']}],
+    e:  [{shape:'triangle',zh:'大規模教學・福特主義教育',en:'Mass Schooling / Fordist Education',
+          desc:'義務教育法在歐美各國陸續頒布；工廠邏輯（按年齡分班、鐘聲控制轉換、統一課程）全面進入學校，大規模複製服從工業紀律的「合格工人」。學習是一種兒童勞動（Learning is Child Labor）：學校以鈴聲、教室、考試規訓兒童進入工廠時間節律。',
+          facts:[['義務教育','英國1870年・德國1871年・美國各州陸續'],['福特主義學校','8年級 + 45分鐘課堂 + 鈴聲 + 年齡分班'],['目的','製造服從工業紀律的工人'  ]],
+          links:['標準化測試','教育產業化','AI教育科技']}],
+    em: [{shape:'diamond',zh:'精神測量學・IQ・精神分析',en:'Psychometrics / IQ / Psychoanalysis',
+          desc:'比內（Binet）-賽蒙量表（1905）、斯坦福—比內量表（1916）：IQ（智力商數）概念由斯特恩（Stern, 1912）提出；心理測量將智識量化為單一數字，掩蓋了測試的文化偏見。佛洛伊德（Freud）建立精神分析體系：無意識、壓抑、性驅力作為行為解釋框架；情感首次被賦予「深層結構」。',
+          facts:[['IQ概念','斯特恩（Stern）1912年提出'],['比內量表','1905年：測量「精神遲滯」→ 後被武器化'],['精神分析','佛洛伊德（1895+）：無意識 + 壓抑 + 移情']],
+          links:['MBTI','廣告黃金時代','PSYOPS資本主義']}],
+    b:  [{shape:'hexagon',zh:'優生學・體育文化',en:'Eugenics (1883) / Physical Culture',
+          desc:'高爾頓（Galton）創立優生學（Eugenics）；1900年代起各國建立優生學法律（美國1907年印第安納州強制絕育法）。強健基督教（Muscular Christianity）運動：健壯的白人男性身體被建構為帝國文明的象徵，體格成為種族「優越性」的視覺證明。',
+          facts:[['強制絕育','美國1927年Buck v. Bell最高法院裁定合憲'],['強健基督教','YMCA（1844）・奧林匹克復興（1896）'],['視覺邏輯','強壯 = 文明 = 值得統治']],
+          links:['納粹種族衛生','CRISPR','焦慮時代']}],
+    bi: [{shape:'diamond',zh:'指紋學・貝蒂永系統',en:'Fingerprints / Bertillon System (1882)',
+          desc:'貝蒂永（Bertillon）以11項身體測量值建立罪犯識別檔案（1882）；是標準化人體數據庫的先驅，後被指紋技術取代。指紋識別最先在英國印度殖民地系統化（1858年赫歇爾），高爾頓建立分類系統；殖民地起源被後來的歷史書寫所掩蓋。神經影像學早期萌芽、識別慣犯制度建立。',
+          facts:[['貝蒂永','1882年巴黎警察局 → 11項身體測量'],['指紋殖民地起源','英屬印度（1858年赫歇爾・孟加拉）'],['高爾頓貢獻','指紋分類系統（1892）']],
+          links:['FERET計畫','DNA法醫','活在生物特徵中']}],
+    m:  [{shape:'circle',zh:'醫療記錄・精神疾病分類',en:'Medical Records / Classifying Mental Disorders',
+          desc:'標準化病歷表格普及；克雷佩林（Kraepelin）建立精神疾病分類學，「正常」與「偏差」的醫學定義成為社會控制工具——異見者被以「精神疾病」拘押。俄羅斯以「緩慢精神分裂症」診斷政治異見者，是醫療記錄被武器化的典型案例。',
+          facts:[['克雷佩林','精神分裂症・躁鬱症分類框架（1899）'],['政治武器','蘇聯「緩慢精神分裂症」診斷政治異見者'],['現代延伸','DSM（1952+）・ICD・EHR']],
+          links:['WHO（1948）','電子健康記錄','ETB']}],
+    p:  [{shape:'circle',zh:'殖民地勞改設施・慣犯識別',en:'Colonial Labour Prisons / Repeat Offender ID',
+          desc:'英國流放制度（澳洲）、法國魔鬼島：監獄與殖民地土地開發直接結合，「囚犯即勞動資源」的邏輯後來延伸至美國南方租用囚犯制（Convict Leasing）。識別慣犯整合（指紋・貝蒂永測量）：監獄開始建立系統性個人檔案，犯罪記錄跟隨個人終身。',
+          facts:[['流放制度','澳洲流放 1788-1868（16萬人）'],['租用囚犯','美國南方1865-1930年代'],['技術整合','指紋 + 照片 + 貝蒂永 = 個人永久犯罪檔案']],
+          links:['監獄工業複合體','Supermax','監獄輸出層次']}],
+    po: [{shape:'diamond',zh:'殖民地警察軍事化',en:'Police Militarization / Colonial Model',
+          desc:'愛爾蘭皇家警察（RIC）、印度帝國警察作為準軍事占領力量；殖民地警務模式後被輸出回宗主國，形成帝國迴路。殖民地警察創新後來被「引進」本土：橡皮子彈（北愛爾蘭）、人群控制技術（英屬印度）、大規模監控（英屬馬來亞）。',
+          facts:[['帝國迴路','殖民地創新 → 本土警務'],['RIC','愛爾蘭皇家警察 → 北愛爾蘭警察改革'],['現代延伸','以色列佔領技術出口・1033計畫']],
+          links:['警察國家','COINTELPRO','AI預測警務']}],
+    bo: [{shape:'square',zh:'強迫移民・契約勞工制度',en:'Forced Migration / Coolie System',
+          desc:'契約勞工（Coolie）制度取代被廢除的奴隸制：印度、中國勞工被運往種植園，以合法「契約」形式延續奴役邏輯。現代護照前身：各國開始要求旅行者攜帶身份文件，但殖民地人口的流動性仍被強制管理而非自願。',
+          facts:[['契約勞工','1838-1920：150萬印度人輸往加勒比海・斐濟'],['中國苦力','1849-1874：40萬中國人往美洲・秘魯'],['文件控制','「契約」= 被迫接受・幾乎無法終止']],
+          links:['現代護照制度','歐洲堡壘','氣候強迫移民']}],
+    bu: [{shape:'square',zh:'韋伯式機器官僚體制',en:'Weberian Machine Bureaucracy / Iron Cage',
+          desc:'馬克斯·韋伯「鐵籠（Iron Cage）」：層級分明、文件化、非人格化的官僚體制，以效率之名剝奪個人自主，成為帝國管理的標準模型。帝國統計系統：大英帝國、法蘭西帝國建立全球性人口普查、土地測量、資源統計體系，為現代數據治理奠定基礎。',
+          facts:[['韋伯','《新教倫理與資本主義精神》（1905）'],['鐵籠','理性化官僚制 → 去人格化・效率至上'],['帝國統計','英屬印度人口普查（1872起每10年一次）']],
+          links:['官僚法西斯主義','數位官僚體制','算法行政']}],
+    co: [{shape:'triangle',zh:'瓜分非洲（1884–1914）',en:'Scramble for Africa / Berlin Conference (1884)',
+          desc:'柏林會議（1884-85）後歐洲列強系統性瓜分非洲；電報、鐵路、武器作為帝國控制的技術基礎設施全面建立。種族隔離法律化：南非種族隔離（Apartheid）的法律基礎在殖民地時期建立，1948年由國民黨政府正式制度化。',
+          facts:[['柏林會議','1884-85：無非洲代表參與的非洲瓜分'],['技術基礎設施','電報（1850s）・鐵路・武器 = 帝國控制工具'],['種族隔離','南非1948-1994：通行證制度 = 殖民地技術']],
+          links:['新殖民主義','數位殖民主義','技術捕獲']}],
+   }
+  },
+  {id:'e4', zh:'第四紀　戰爭、極權與福利國家', en:'1920–1960', color:'#783838',
+   nodes:{
+    t:  [{shape:'square',zh:'福特主義・裝配線時間',en:'Fordism / Assembly Line Time',
+          desc:'亨利·福特的流水作業線（1913）以機器速度強制同步所有工人的動作；1926年福特率先實施每週五天工作制，「40小時工作週」作為標準工時制度化，但同時使勞動強度大幅提升。標準學制：45分鐘課堂・學期制・年齡分班，學校時間與工廠時間的同構使教育成為工業紀律的預備場所。',
+          facts:[['流水線','亨利·福特，海蘭德帕克工廠（1913）'],['5天工作制','1926年福特率先實施'],['學校同構','學校時鐘 = 工廠時鐘']],
+          links:['即時生產','算法排班','平台時間']}],
+    e:  [{shape:'triangle',zh:'標準化測試・IQ引入學校',en:'Standardized Testing / SAT (1926)',
+          desc:'IQ測試引入學校（1920年代美國大規模施測）；SAT（1926年）、標準化考試作為「客觀」篩選工具，實際上固化了階級與種族分層，以測試分數掩蓋結構性不平等。工業教育・職業培訓：以工廠需求為導向的職業教育體系建立，「教育=投資未來工人」的邏輯確立。',
+          facts:[['SAT','大學入學測驗（1926年首次）'],['IQ施測','一戰：165萬美軍接受IQ測試 → 種族排行'],['問題','測試設計者的文化偏見被客觀化']],
+          links:['競爭效應','教育產業化','AI教育科技']}],
+    em: [{shape:'diamond',zh:'EEG・HR・MBTI',en:'EEG (1924) / HR / MBTI (1943)',
+          desc:'漢斯·柏格（Hans Berger）1924年發明腦電圖（EEG），大腦電活動首次可被外部記錄；同期，能力傾向測試（SAT等）以數字捕捉「人類潛能」。「人力資源（HR）」概念確立（1940年代）：情感管理成為企業效率的組成部分。MBTI（1943）伊莎貝爾·邁爾斯以榮格類型理論開發16種人格分類，至今全球企業廣泛使用。',
+          facts:[['EEG','漢斯·柏格 1924年，腦波首次被記錄'],['HR','梅奧「霍桑效應」→ 情感管理 = 生產力'],['MBTI','16種人格類型，每年2000萬人接受測試']],
+          links:['FACS面部編碼','廣告黃金時代','AI情感識別']}],
+    b:  [{shape:'hexagon',zh:'納粹「新人」・種族衛生',en:'"New Man" / Racial Hygiene / Eugenics Laws',
+          desc:'納粹德國與蘇聯都建構了「新型人體」的政治理想（雅利安男性身體、蘇聯英雄身體）；種族衛生（Rassenhygiene）將醫療、體育、性選擇整合為國家生命政治，強制塑造「理想」身體。「性別角色」概念（John Money, 1950年代）將性別行為規範化；同性戀被醫學化為「精神疾病」（APA DSM I, 1952）。',
+          facts:[['T4行動','納粹強制安樂死 70萬身心障礙者'],['美國','1907-1970年代：60,000人被強制絕育'],['DSM I（1952）','同性戀列為「精神障礙」，1973年刪除']],
+          links:['CRISPR','焦慮時代','AI生命政治']}],
+    bi: [{shape:'diamond',zh:'納粹生物特徵・IBM打孔卡',en:'State Eugenics & Biometrics / IBM Punch Cards',
+          desc:'納粹種族鑑定以體質測量決定種族身份；IBM打孔卡技術被用於追蹤被迫害群體——生物特徵技術與國家暴力的極端結合，揭示「中立技術」的神話。SEB（國家生物特徵計畫）：早期聲紋識別技術也在此時期萌芽。',
+          facts:[['IBM合作','沃森（Thomas Watson）獲納粹德國十字勳章（1937）'],['追蹤對象','猶太人・羅馬人・同性戀者・殘障者'],['教訓','技術本身並不中立：設計目的決定用途']],
+          links:['FERET計畫','DNA法醫','活在生物特徵中']}],
+    m:  [{shape:'circle',zh:'WHO（1948）・強制絕育',en:'WHO (1948) / Eugenics & Forced Sterilization',
+          desc:'1948年WHO成立，確立全球標準化疾病分類（ICD）；同期納粹T4行動強制絕育達40萬人，美國各州強制絕育法繼續執行——醫療機構成為生命政治的執行者。醫療數據的全球標準化（ICD）使全球人口健康「可比較」，同時確立了誰定義「健康」的問題。',
+          facts:[['WHO成立','1948年4月7日，聯合國機構'],['ICD','國際疾病分類（WHO定義「正常/異常」）'],['強制絕育','美國各州至1970年代仍有執行']],
+          links:['電子健康記錄','ETB','DNA-4基因組庫']}],
+    p:  [{shape:'circle',zh:'滅絕營・古拉格・POW',en:'Extermination Camps / Gulag / POW',
+          desc:'工業化大規模囚禁與殺戮（奧斯威辛・古拉格）；現代官僚技術直接服務於種族滅絕，揭示技術「中立性」神話。日內瓦公約確立戰俘保護框架，但殖民地反抗者往往被排除。Tynar（待確認）、Einbäsung（可能為消毒程序）等節點顯示監獄空間的多種功能。',
+          facts:[['奧斯威辛','1940-1945：110萬人遇難，工業化屠殺'],['古拉格','蘇聯勞改營系統（1918-1987）'],['POW規則','日內瓦公約（1949修訂）≠ 殖民地反抗者保護']],
+          links:['監獄工業複合體','Supermax','監獄輸出層次']}],
+    po: [{shape:'diamond',zh:'警察國家・極權主義',en:'Police State / Gestapo / NKVD / McCarthyism',
+          desc:'蓋世太保（Gestapo）、蘇聯NKVD：全面監控、政治清洗制度化，恐懼本身成為治理技術。麥卡錫主義的FBI監控左翼人士（1947-1957）在民主國家延續極權監控邏輯。政治犯「去名化」（去除個人身份）：囚犯以號碼取代姓名，身份被系統性抹除。',
+          facts:[['蓋世太保','160000線人網絡（非國家雇員告密者）'],['FBI・COINTELPRO','1956-1971年秘密顛覆反戰・民權運動'],['去名化','號碼 = 人 = 可計算的單元']],
+          links:['COINTELPRO','預測性警務','AI預測警務']}],
+    bo: [{shape:'square',zh:'現代護照制度・難民危機',en:'Modern Passports (1920) / Refugee Crisis',
+          desc:'1920年巴黎會議確立護照標準格式；兩次世界大戰製造大規模難民潮，漢森護照（Nansen Passport）為無國籍者提供臨時文件。強迫移民・難民危機：1920-1950年代歐洲難民問題促使1951年聯合國難民公約誕生，「難民」作為法律類別確立。',
+          facts:[['巴黎會議','1920年護照國際標準化'],['漢森護照','1922年：45萬難民（亞美尼亞・俄羅斯）'],['1951難民公約','確立難民法律定義和不驅回原則']],
+          links:['ID Cards','歐洲堡壘','氣候強迫移民']}],
+    bu: [{shape:'square',zh:'官僚法西斯主義・SSN（1936）',en:'Bureaucratic Fascism / SSN (1936) / Arendt',
+          desc:'鄂蘭（Hannah Arendt）「平庸之惡（Banality of Evil）」：官僚機器執行種族滅絕——艾希曼只是「按規定辦事」；大規模謀殺需要無數普通官僚的服從。美國社會安全號碼（SSN, 1936）首次以唯一數字編號標識全體公民，為後來數位身份系統奠定範本。',
+          facts:[['鄂蘭','《艾希曼在耶路撒冷》（1963）：平庸之惡'],['SSN（1936）','羅斯福新政：退休金計劃 → 唯一身份編號'],['教訓','官僚服從 = 暴力機器的運轉燃料']],
+          links:['數位官僚體制','算法行政','技術科層主義']}],
+    co: [{shape:'triangle',zh:'極權殖民官僚・去殖民化',en:'Totalitarian Colonial Bureaucracy / Decolonization',
+          desc:'英國肯亞集中營（Mau Mau鎮壓，1952-60）等殖民地暴力實驗室；殖民地行政體系與極權主義技術相互強化。印度獨立（1947）、非洲解放運動興起，但殖民地行政系統多被繼承——「旗幟獨立，結構不變」（恩克魯馬）。',
+          facts:[['肯亞Mau Mau','1952-60：英國集中營・酷刑・15萬人拘押'],['印度獨立','1947：行政架構（ICS）→ IAS（基本不變）'],['去殖民化悖論','政治獨立 ≠ 經濟/知識/文化獨立']],
+          links:['新殖民主義','數位殖民主義','平台帝國主義']}],
+   }
+  },
+  {id:'e5', zh:'第五紀　冷戰、電腦化與人權', en:'1960–1990', color:'#487878',
+   nodes:{
+    t:  [{shape:'square',zh:'即時生產・AMT・零工時間',en:'Just-in-Time / AMT / Gig Economy',
+          desc:'豐田「即時生產（JIT）」系統（1970年代）將供應鏈時間壓縮至極限；自動化機器（AMT）的時鐘取代人類工人的生理節律。新自由主義重構勞動時間：兼職、零工合約、不規律班制（尤其在服務業、零售業）使標準工時制度鬆動，工人失去對自身時間的主導權。',
+          facts:[['JIT','豐田生產系統（TPS）：「剛好夠」的時間邏輯'],['AMT','數控機床（1952+）：機器時鐘 > 人的生理時鐘'],['零工時間','「彈性」勞動 = 工人承擔所有時間風險']],
+          links:['24/7經濟','算法排班','平台時間']}],
+    e:  [{shape:'triangle',zh:'競爭效應・閱讀力下滑・網路初期',en:'Competitive Effects / Aliteracy / Early Internet',
+          desc:'冷戰後（尤其蘇聯衛星Sputnik, 1957後）美國教育改革強化科學技術競爭；標準化考試作為人力資本篩選工具，「競爭力」成為教育的核心價值，取代公民素養。1980年代個人電腦、1990年代初期網路進入教育，引發「螢幕衝擊傳統學習」的論爭。「識字能力（Aliteracy）」問題：能讀字但選擇不讀。',
+          facts:[['冷戰衝擊','1957 Sputnik → 美國《國防教育法》（1958）'],['個人電腦','1984 Apple Mac → 1990年代電腦進教室'],['Aliteracy','能讀但選擇不讀 → 後來的短視頻文化']],
+          links:['教育產業化','AI教育科技','算法篩選']}],
+    em: [{shape:'diamond',zh:'FACS・多元智能・感覺被計算',en:'FACS (Ekman, 1978) / Multiple Intelligences (Gardner)',
+          desc:'保羅·艾克曼（Paul Ekman）1978年發布FACS系統：將臉部肌肉運動（Action Units）編碼為情感識別的標準語言；「基本情感（Basic Emotions）」的「普遍性」主張後來被廣泛引用但也受到文化心理學的強烈質疑。霍華德·加德納（Howard Gardner）《心智的框架》（1983）提出8種智能。個人電腦開始用於心理測驗，「感覺被計算（Feeling Computed）」的時代開啟。',
+          facts:[['FACS','6種基本情感（後更新為7種）的普遍性聲稱'],['批評者','Lisa Feldman Barrett：情感不普遍，是文化建構的'],['加德納','8種智能：語言・數理・音樂・空間・身體・人際・內省・自然']],
+          links:['AI情感識別','PSYOPS資本主義','廣告黃金時代']}],
+    b:  [{shape:'hexagon',zh:'大禁閉・克萊恩格・同性戀除罪',en:'The Great Confinement (Foucault) / Klein Grid',
+          desc:'傅柯《瘋癲與文明》（1961）所描述的對「不正常」身體（精神病患、流浪者、窮人）的大規模機構化拘禁；精神病院作為規訓裝置，對「偏差」身體的制度管理。弗里茨·克萊恩（Fritz Klein）1978年提出多維性取向量表，挑戰「同/異」二元分類；1973年美國精神醫學學會從DSM中刪除同性戀，但「治癒」爭議延續。',
+          facts:[['傅柯','《瘋癲與文明》（1961）：精神病院 = 規訓裝置'],['克萊恩量表','7個維度 × 3個時間點 = 21個參數'],['DSM','1973年刪除同性戀 → 但至今仍有48國將其入罪']],
+          links:['ADHD','焦慮時代','CRISPR']}],
+    bi: [{shape:'diamond',zh:'DNA法醫・FERET・13M數據庫',en:'DNA Forensics (1984) / FERET Program (1993)',
+          desc:'1984年傑佛瑞斯（Alec Jeffreys）發明DNA指紋技術；DARPA資助的FERET人臉識別評估計畫（1993-97）確立人臉識別軍事研究基礎。數據庫規模急速擴張：美國FBI指紋數據庫（13M+）、各國AFIS系統（100M+）建立；DNA-6（DNA第六代數據庫）開始整合跨國數據。',
+          facts:[['DNA指紋','傑佛瑞斯1984年：首個「DNA指紋」'],['FERET計畫','DARPA 1993-97：軍事人臉識別評估框架'],['數據庫規模','美國IAFIS（1999）：4700萬指紋']],
+          links:['9/11後生物特徵擴張','活在生物特徵中','DNA-4基因組庫']}],
+    m:  [{shape:'circle',zh:'健康資訊學・MPI・毒品政策',en:'Health Informatics / Master Patient Index',
+          desc:'電腦技術引入醫院管理；ICD-9標準化疾病編碼（1978）使醫療數據首次可跨機構比較，但編碼系統本身的設計偏見被「客觀化」。主患者索引（MPI）：首次為每個患者建立唯一識別號，為後來的電子健康記錄奠定基礎。毒品政策：美國「毒品戰爭」的醫療化與刑事化之爭。',
+          facts:[['ICD-9','1978年WHO：國際疾病分類第9版'],['MPI','主患者索引：醫療系統中的唯一身份號'],['毒品政策','1971年尼克森宣告「毒品戰爭」→ 大規模監禁']],
+          links:['電子健康記錄','ETB','監獄工業複合體']}],
+    p:  [{shape:'circle',zh:'監獄工業複合體・監獄實驗室',en:'Prison Industrial Complex / Prison as a Laboratory',
+          desc:'美國「毒品戰爭」大規模擴張囚禁人口；私人監獄產業化（CCA 1983年成立），非裔美人遭種族化大規模監禁。囚犯被用於非自願醫學實驗，延續殖民地醫療實驗邏輯——費城霍姆斯堡監獄（1951-74）：數千囚犯被用於測試藥物、化學武器、輻射。',
+          facts:[['私人監獄','CCA（現CoreCivic）1983年成立'],['種族化監禁','非裔美人佔13%人口，佔38%囚犯'],['霍姆斯堡監獄','1951-74：對囚犯的非自願人體實驗']],
+          links:['Supermax','ICE設施','監獄輸出層次']}],
+    po: [{shape:'diamond',zh:'警察電腦化・COINTELPRO',en:'Computerization of Police / FBI COINTELPRO',
+          desc:'電腦犯罪記錄庫、AFIS指紋系統整合；FBI秘密顛覆民權運動（COINTELPRO, 1956-71）：監控馬丁·路德·金、黑豹黨、AIM，警察與情報機構邊界融合。美國電話監聽（FISA）：法院秘密批准大規模監聽令，為後來的NSA大規模監控奠定法律先例。',
+          facts:[['COINTELPRO','1956-71：秘密顛覆民權・反戰・左翼組織'],['監控對象','MLK（1963-68）・黑豹黨・美國印地安運動'],['AFIS','自動指紋識別系統（FBI，1999年全面上線）']],
+          links:['愛國者法案','預測性警務','Clearview AI']}],
+    bo: [{shape:'square',zh:'冷戰邊境・柏林圍牆・通行證制度',en:'Cold War Borders / Berlin Wall (1961) / Pass System',
+          desc:'鐵幕、柏林圍牆（1961-1989）：冷戰將全球邊境重組為意識形態集團邊界；難民被地緣政治武器化（古巴人 vs 海地人的美國難民政策雙重標準）。南非班圖斯坦通行證制度（1952-1986）：黑人必須持通行證在「白人地區」工作，是最精細的身體移動管控技術之一。',
+          facts:[['柏林圍牆','1961-1989：140人在嘗試越過時被射殺'],['通行證制度','南非：16歲以上黑人必須隨身攜帶'],['難民雙標','古巴人（政治庇護）vs 海地人（遣返）']],
+          links:['現代護照制度','歐洲堡壘','氣候強迫移民']}],
+    bu: [{shape:'square',zh:'社會即計算系統・控制論',en:'Society as Computational System / Cybernetics',
+          desc:'維納（Norbert Wiener）控制論（1948）將社會視為可建模的信息系統；新自由主義（撒切爾、雷根）以「效率」為名拆解福利官僚體制，公共服務私有化加速。社會安全號碼擴展：SSN從養老金系統擴展至信用評分、醫療記錄、身份驗證，成為美國公民的事實上「唯一識別符」。',
+          facts:[['維納控制論','1948：信息 + 反饋 = 控制邏輯'],['新自由主義','撒切爾（1979）・雷根（1981）→ 私有化浪潮'],['SSN擴展','1936年僅用於養老金 → 2000年幾乎所有政府功能']],
+          links:['數位官僚體制','荷蘭SyRI','技術科層主義']}],
+    co: [{shape:'triangle',zh:'新殖民主義・IMF結構調整',en:'Neocolonialism (Nkrumah, 1965) / IMF SAP',
+          desc:'恩克魯馬（1965）概念化新殖民主義：政治獨立後通過債務、跨國企業延續的經濟控制；IMF結構調整計畫（SAP）強迫全球南方開放市場、削減社會支出。世界系統理論（沃勒斯坦）：核心-半邊陲-邊陲的全球勞動分工結構持續再生產殖民地式的不平等。',
+          facts:[['恩克魯馬','《新殖民主義：帝國主義的最後階段》（1965）'],['IMF結構調整','1980s：非洲 + 拉美被迫開放市場 + 削減社會支出'],['債務陷阱','全球南方對IMF/WB債務 = 新型「條約港口」']],
+          links:['數位殖民主義','平台帝國主義','技術捕獲']}],
+   }
+  },
+  {id:'e6', zh:'第六紀　數位化、全球化與「反恐戰爭」', en:'1990–2010', color:'#685878',
+   nodes:{
+    t:  [{shape:'square',zh:'24/7經濟・注意力殖民',en:'24/7 Economy / Attention Colonization',
+          desc:'全球化、網際網路、電子郵件消滅了「非工作時間」的概念；喬納森·克拉里（Jonathan Crary）《24/7：資本主義攻擊睡眠》：睡眠成為資本主義的最後一個「無效率」地帶，生物節律被資本時間完全殖民。Uber、亞馬遜倉儲等平台以算法實時決定工人工作時間；工人的身體時間被完全外包給平台算法管理。',
+          facts:[['克拉里','《24/7》（2013）：資本主義與睡眠的戰爭'],['電子郵件','1990年代：工作時間邊界消失'],['亞馬遜倉儲','每小時追蹤工人效率 → 算法即時排班']],
+          links:['平台時間','算法排班','注意力殖民']}],
+    e:  [{shape:'triangle',zh:'教育產業化・學生債務（DEBT）',en:'Education Industry / Student Debt',
+          desc:'美國學生貸款債務（2000年代起急劇膨脹，現超過1.7兆美元）；教育商品化將學習轉化為個人金融投資，而非公共產品；高等教育成為中產階級身份複製的私人成本。網際網路進入教育（1990年代）；TED Talk、MOOCs（大規模開放線上課程）以「民主化知識」為名，實則將矽谷思維設定為全球教育標準。',
+          facts:[['美國學債','1.7兆美元（2024）：4400萬借款人'],['私立大學','非營利大學CEO薪資超過200萬美元'],['MOOC','Coursera・edX：矽谷教育標準的全球化']],
+          links:['AI教育科技','算法篩選','平台帝國主義']}],
+    em: [{shape:'diamond',zh:'廣告黃金時代・受眾研究・情感定向',en:'"Golden Age of Advertising" / Audience Research / Nano Targeting',
+          desc:'電視廣告時代（1950-1990年代）以心理學研究操縱消費情感；焦點小組、受眾測量（尼爾森收視率）確立了大規模情感操縱的工業體系。CAT（電腦適性測試）/IRT（項目反應理論）精確化；S-T-P（分眾—鎖定—定位）市場行銷策略與情感數據結合，個人情感檔案開始被大規模建立，「感覺被鎖定（Feeling Targeted）」成為日常體驗。',
+          facts:[['尼爾森','1950s：電視收視率 → 受眾行為量化'],['S-T-P','Segmentation・Targeting・Positioning = 情感武器'],['數據仲介','1990s：Acxiom等公司建立個人資料檔案']],
+          links:['PSYOPS資本主義','振動資本主義','AI情感識別']}],
+    b:  [{shape:'hexagon',zh:'ADHD・焦慮・憂鬱時代',en:'ADHD / Age of Anxiety, Stress & Depression',
+          desc:'ADHD（注意力不足過動症）診斷在1990年代急劇擴張（尤其在美國男孩中）；「焦慮、壓力、憂鬱時代」到來，精神疾病診斷率急升，精神藥物市場化，個體心理問題被切斷其社會成因。「健身產業、男性化妝品、男裝時尚」：男性身體的消費文化化，身體成為自我品牌的媒介。',
+          facts:[['ADHD診斷','美國兒童診斷率從1970年1% → 2020年10%'],['抗憂鬱藥','百憂解（1987）→ 精神藥物市場化'],['健身產業','2024年全球健身市場1300億美元']],
+          links:['CRISPR','AI生命政治','ETB']}],
+    bi: [{shape:'diamond',zh:'9/11後生物特徵擴張・US-VISIT',en:'Post-9/11 Biometrics / US-VISIT / Patriot Act',
+          desc:'美國愛國者法案（2001）、US-VISIT計畫（2004）：指紋、虹膜、人臉數據庫急速擴張；「安全」成為大規模生物特徵採集的政治動員語境，種族化監控對穆斯林社區系統性施行。「反恐戰爭種族化監控」：特定族裔（穆斯林・阿拉伯人・南亞人）被系統性定性為「潛在恐怖分子」。',
+          facts:[['US-VISIT','2004：所有外國訪客採集指紋・拍照'],['愛國者法案','NSA大規模電話監聽（斯諾登2013年揭露）'],['種族化','「Driving While Black/Muslim」:  算法偏見的前身']],
+          links:['Clearview AI','活在生物特徵中','AI預測警務']}],
+    m:  [{shape:'circle',zh:'電子健康記錄（EHR）・商業健康數據',en:'Electronic Health Records (EHR) / Commercial Health Data',
+          desc:'數位化病歷全面普及；醫療數據成為保險精算、藥廠研究與廣告定向的新型商業資產，患者成為「數據生產者」而非數據主體。23andMe等消費者基因組服務興起：用戶以99美元提供自己的基因組數據，換取「祖源報告」，實際上將最敏感的生物數據商業化。',
+          facts:[['美國EHR','2009年《HITECH法案》→ 強制推行EHR'],['健康數據市場','美國患者數據市場估值150億美元/年'],['23andMe','2023：1400萬用戶基因數據遭駭 → 公司破產']],
+          links:['ETB','DNA-4基因組庫','AI生命政治']}],
+    p:  [{shape:'circle',zh:'Supermax超高安全監獄・關塔那摩',en:'Supermax / Guantánamo / Extralegal Detention',
+          desc:'單獨囚禁作為系統性懲罰手段；「敵方戰鬥員」類別繞過日內瓦公約，關塔那摩灣（2002-）的法外拘押使帝國監獄邏輯在法律之外延伸。黑點監獄（Black Sites）：CIA秘密監獄遍佈全球，「酷刑備忘錄」使酷刑合法化。移民拘留設施私有化（GEO Group, CoreCivic）成為核心增長市場。',
+          facts:[['Supermax','美國：現有57個超高安全設施，長期單獨監禁'],['關塔那摩','2002年至今：779人被拘押，多數從未被起訴'],['私人監獄','GEO + CoreCivic = 20億美元/年政府合約']],
+          links:['監獄輸出層次','ICE設施','AI預測警務']}],
+    po: [{shape:'diamond',zh:'預測性警務・PredPol・1033計畫',en:'Predictive Policing / PredPol / 1033 Program',
+          desc:'PredPol算法將歷史偏見「客觀化」：過去針對黑人社區的過度警務 → 輸入算法 → 算法「預測」黑人社區更多犯罪 → 更多警務 → 循環強化。1033計畫（1990年）：美國將剩餘軍事裝備（MRAP裝甲車、夜視鏡、步槍）轉移至地方警察，佔領技術正式返回「本土」。',
+          facts:[['PredPol','洛杉磯・新奧爾良 → 偏見算法 + 法律外衣'],['1033計畫','2014年：5億美元軍備轉移地方警察'],['人臉識別','Detroit警察：96%的錯誤識別指向黑人男性']],
+          links:['Clearview AI','AI預測警務','算法行政']}],
+    bo: [{shape:'square',zh:'歐洲堡壘・申根・FRONTEX',en:'Fortress Europe / Schengen / FRONTEX (2004)',
+          desc:'申根協議（1985/1995）消除內部邊境同時軍事化外部邊境；FRONTEX成立（2004），地中海成為全球最致命移民路線（2000-2024：5萬人死亡）。移民拘留設施私有化（Serco, G4S）；澳大利亞「Manus & Nauru離岸拘留」：法外邊境外包的範本。',
+          facts:[['地中海死亡','2014-2024：累計2.5萬人在嘗試穿越時死亡'],['FRONTEX','年預算7.5億歐元（2022）→ 使用AI邊境技術'],['離岸拘留','澳大利亞 → 歐盟 → 英國的擴散']],
+          links:['智慧邊境','氣候強迫移民','ICE設施']}],
+    bu: [{shape:'square',zh:'數位官僚體制（e-Government）・算法決策',en:'E-Government / Algorithmic Decision Making',
+          desc:'政府數位化服務推進；「系統錯誤」取代人的責任，錯誤的代價由最脆弱者承擔。荷蘭SyRI系統（2020年被法院裁定違反人權）：以算法識別「社會福利欺詐風險」，系統性地針對低收入・少數族裔社區。英國失業救濟系統：數位化 → 大量人員被算法判定為「詐欺者」而被切斷救濟。',
+          facts:[['荷蘭SyRI','2020年海牙地院：違反《歐洲人權公約》第8條'],['英國UC系統','萬用信貸（Universal Credit）：算法判決 + 六週延遲'],['問責缺口','算法決策 = 誰都「不用」負責']],
+          links:['技術科層主義','Palantir','AI生命政治']}],
+    co: [{shape:'triangle',zh:'數位殖民主義・Facebook Free Basics',en:'Digital Colonialism / Facebook Free Basics',
+          desc:'Facebook Free Basics（2013-2016印度被禁）：以「連接世界」為名控制全球南方數位基礎設施，Meta決定哪些網站可以「免費」訪問，哪些需要付費。科技平台的全球擴張複製資訊時代的殖民地提取邏輯：全球南方用戶生產的數據由北方平台所有，訓練AI的模型再輸回全球南方市場。',
+          facts:[['Free Basics','60個國家推出 → 印度2016年以「網路中立」為由禁止'],['數據提取','西非法語國家的WhatsApp數據 → Meta訓練數據'],['平台壟斷','谷歌・Meta在非洲的廣告市場佔有率>80%']],
+          links:['技術捕獲','平台帝國主義','AI生命政治']}],
+   }
+  },
+  {id:'e7', zh:'第七紀　人工智慧・演算法治理・當代', en:'2010–2025', color:'#d8d4c4',
+   nodes:{
+    t:  [{shape:'square',zh:'平台時間・算法排班・注意力殖民',en:'Platform Time / Algorithmic Scheduling / Attention Colonization',
+          desc:'社交媒體算法設計以最大化用戶「停留時間（Time on Platform）」為目標；無限滾動、通知機制、多巴胺循環：用戶的注意力時間被平台資本完全殖民，個人時間自主性在技術架構層面被剝奪。亞馬遜倉儲工人、外賣平台騎手由算法實時決定工作節律；科學研究確認睡眠剝奪與長期算法排班的關係，但平台公司的「獨立承包商」分類使勞動法保護失效。',
+          facts:[['TikTok','平均用戶日均使用95分鐘 → 「無限滾動」設計'],['亞馬遜倉儲','每秒追蹤員工效率 → 算法自動解僱'],['科學研究','算法排班 → 睡眠不足 → 長期健康損害']],
+          links:['教育產業化','AI教育科技','PSYOPS資本主義']}],
+    e:  [{shape:'triangle',zh:'AI教育科技・1.6兆學債・算法篩選',en:'Automated EdTech / $1.7T Student Debt / UK A-Level Scandal',
+          desc:'AI自適應學習平台（Coursera、Khan Academy等）以算法個性化教育；但1.7兆美元的美國學生貸款危機揭示教育商品化的系統性後果。英國A-Level算法醜聞（2020年）：自動化決策系統系統性懲罰貧困地區學生，教育算法複製並強化了社會不平等，「客觀」算法成為階級複製的新機器。EdTech數據採集：學生的學習行為被商業化為訓練AI的原材料。',
+          facts:[['A-Level醜聞','2020年：英國算法以「歷史排名」降低貧困校成績'],['學習數據','Pearson・Chegg收集學生學習行為 → 商業變現'],['AI教師','AI助教取代助教職位：斯坦福・MIT已大規模部署']],
+          links:['PSYOPS資本主義','數位殖民主義','技術捕獲']}],
+    em: [{shape:'diamond',zh:'AI情感識別・PSYOPS資本主義・振動資本主義',en:'Automated Emotion Recognition / PSYOPS Capitalism / Vibe Capitalism',
+          desc:'HireVue等AI面試軟件分析求職者臉部微表情評估「可靠性」；Cambridge Analytica的微觀心理定向廣告（心理計量學+Facebook數據）：情感數據成為政治操縱工具（2016年美國大選）。「振動資本主義（Vibe Capitalism）」：以美學情緒（TikTok的氛圍美學）掩蓋物質不平等。每個網路用戶被數據仲介商採集超過1500個行為數據點。',
+          facts:[['HireVue','全球900+家公司使用 → FTC調查（2021）'],['Cambridge Analytica','2016大選：8700萬Facebook用戶數據遭利用'],['數據仲介','Acxiom・Oracle：每人1500+數據點']],
+          links:['活在生物特徵中','算法行政','技術捕獲']}],
+    b:  [{shape:'hexagon',zh:'CRISPR・焦慮時代・AI生命政治',en:'CRISPR / Age of Anxiety & Depression / Biopolitics',
+          desc:'CRISPR-Cas9基因編輯技術（2012年Jennifer Doudna & Emmanuelle Charpentier，2020年諾貝爾獎）；2018年賀建奎基因編輯嬰兒事件：21世紀的新優生學可能不通過強制，而通過「自由選擇的」消費——富人的身體可被科技增強，貧窮者無緣。全球精神健康危機：WHO估計4億人患有抑鬱症或焦慮症。',
+          facts:[['CRISPR','2012：Doudna & Charpentier → 2020諾貝爾化學獎'],['賀建奎','2018：基因編輯嬰兒「CCR5基因敲除」→ 入獄'],['精神健康','全球4億人抑鬱症・6億人焦慮症（WHO）']],
+          links:['DNA-4基因組庫','AI生命政治','ETB']}],
+    bi: [{shape:'diamond',zh:'活在生物特徵識別中・多模態融合',en:'Living in Biometrics / Multimodal Fusion / ID Integration',
+          desc:'人臉識別攝影機遍佈城市（中國5億+攝影機）；多模態識別融合（BODY・VOICE・XR・FACE・EYES）構成無所不在的識別基礎設施。印度Aadhaar：12億人的生物特徵數據庫，福利與生物特徵綁定製造「數位排除」——無法識別者失去福利。美國NGI：200M+記錄的下一代識別系統。',
+          facts:[['中國天網','2022：5億攝影機 → 7秒內識別任何人'],['Aadhaar','12億印度人 → 但1000萬+因識別失敗失去福利'],['Clearview AI','30億張公開圖像 → 未授權訓練人臉識別']],
+          links:['AI預測警務','算法行政','技術捕獲']}],
+    m:  [{shape:'circle',zh:'ETB・DNA-4基因組庫・新優生學',en:'ETB / DNA-4 Genomic Databases / New Eugenics',
+          desc:'可穿戴設備（Apple Watch・Fitbit）、基因組平台（23andMe）整合：身體成為持續數據流的傳感器。英國Biobank（50萬人）、美國「All of Us」（100萬人）等億級規模基因組庫建立，「種族代表性不足」複製殖民地知識提取邏輯——全球南方基因數據稀少但市場價值高。',
+          facts:[['英國Biobank','50萬人基因組 → 製藥公司有償訪問'],['DNA家系追蹤','GEDmatch（開放）→ 美國警察用於犯罪調查'],['代表性問題','基因組數據庫：86%歐裔 → 非歐裔精準醫療更差']],
+          links:['活在生物特徵中','AI生命政治','技術捕獲']}],
+    p:  [{shape:'circle',zh:'監獄輸出層次・ICE設施・數位懲罰',en:'Output Layers of Prison / ICE Detention / Digital Punishment',
+          desc:'性犯罪者登記冊、就業歧視算法：數位足跡使懲罰延伸至監獄牆外；ICE設施、歐盟熱點移民收容所成為私人監獄企業核心增長市場。算法假釋/量刑（COMPAS）：以算法決定假釋資格，ProPublica研究揭示其對黑人被告的系統性歧視。懲罰的「算法化」使問責更加困難。',
+          facts:[['COMPAS','美國假釋算法：黑人誤判為高危2倍→ ProPublica 2016'],['ICE拘留','2024：3.7萬人被拘押（GEO・CoreCivic私人設施）'],['數位懲罰','犯罪記錄+算法+就業平台 = 無限期的後監禁懲罰']],
+          links:['Supermax','算法行政','技術科層主義']}],
+    po: [{shape:'diamond',zh:'AI預測警務・Clearview・軍警技術出口',en:'AI Predictive Policing / Clearview AI / Military-Police Export',
+          desc:'Clearview AI未授權採集30億張公民人臉（包括兒童）；以色列佔領技術（無人機、人臉識別牆、Blueprint系統）在全球60個國家銷售，高科技軍事佔領技術被重新包裝為「城市安全解決方案」。人臉識別錯誤逮捕：底特律、亞特蘭大多起黑人男性因算法錯誤認定而被逮捕。',
+          facts:[['Clearview','30億張照片・3000+執法機構使用'],['以色列出口','「實戰測試的」佔領技術 → 60+國警務市場'],['錯誤逮捕','美國已記錄10+起因人臉識別錯誤的冤假錯案']],
+          links:['活在生物特徵中','技術捕獲','算法行政']}],
+    bo: [{shape:'square',zh:'智慧邊境・1.2億難民・氣候強迫移民',en:'Smart Border Infrastructure / 1.2B Displaced (2024)',
+          desc:'AI熱成像、無人機、自動決策系統構成「智慧邊境」：歐盟ETIAS、美國CBP的生物特徵邊境站。2024年全球超過1.2億人被迫離開家園（UNHCR創歷史紀錄），氣候殖民主義是新增的強迫移民驅動力——殖民地碳排放造成最不應為氣候變化負責者首先成為氣候難民。',
+          facts:[['UNHCR 2024','1.2億難民+境內流離失所者（歷史最高）'],['智慧邊境','歐盟在突尼斯・利比亞部署AI邊境監控技術'],['氣候難民','2050預測：2.16億氣候移民（世界銀行）']],
+          links:['ICE設施','活在生物特徵中','技術捕獲']}],
+    bu: [{shape:'square',zh:'算法行政・Palantir・荷蘭SyRI',en:'Algorithmic Administration / Technocracy / Palantir',
+          desc:'荷蘭SyRI系統（2020年被法院裁定違反人權）：以算法識別「社會福利欺詐風險」，系統性地針對低收入・少數族裔社區。Palantir、Microsoft等科技公司深度介入政府治理（ICE、NSA、英國NHS），民主問責更加困難。「技術科層主義」：以技術複雜性作為政策透明度的屏障。',
+          facts:[['荷蘭SyRI','2020年：法院裁定算法歧視低收入社區'],['Palantir','US ICE合約 + UK NHS合約 + 烏克蘭戰場AI'],['問責缺口','算法決策 → 誰都不需要為結果負責']],
+          links:['AI生命政治','技術捕獲','平台帝國主義']}],
+    co: [{shape:'triangle',zh:'技術捕獲・平台帝國主義・AI生命政治',en:'Technological Capture / Platform Imperialism / AI Biopower',
+          desc:'AI訓練數據對全球南方的無授權提取；谷歌、Meta、亞馬遜複製東印度公司模式——私人企業掌握帝國級數據權力。傅柯生命政治（Biopower）在AI時代完成：對人口的生死、健康、繁殖與流動的算法管理。「計算帝國」的閉環：殖民地提取數據 → 訓練AI → AI再管理被提取者的生命。',
+          facts:[['訓練數據','GPT-4訓練數據中全球南方語言<1%，卻被全球使用'],['數據殖民','英語偏見 → AI「中立性」神話的延伸'],['閉環','殖民地提取數據 → AI訓練 → 算法殖民地統治']],
+          links:['活在生物特徵中','算法行政','CRISPR']}],
+   }
+  },
+];
+
+// ═══════════════════════════════════════════════
+// LAYOUT CONFIG
+// ═══════════════════════════════════════════════
+const COL_W = 168;
+const ERA_H = 210;
+const PAD_LEFT = 130;
+const PAD_TOP = 60;
+const HEADER_H = 50;
+const NODE_SPACING = 95;
+
+const totalW = PAD_LEFT + COLS.length * COL_W + 60;
+const totalH = PAD_TOP + ERAS.length * ERA_H + 80;
+
+const svg = document.getElementById('canvas');
+svg.setAttribute('width', totalW);
+svg.setAttribute('height', totalH);
+svg.setAttribute('viewBox', `0 0 ${totalW} ${totalH}`);
+
+// ═══════════════════════════════════════════════
+// DRAW FUNCTIONS
+// ═══════════════════════════════════════════════
+function makeEl(tag, attrs={}){
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for(const [k,v] of Object.entries(attrs)) el.setAttribute(k,v);
+  return el;
+}
+function txt(content, x, y, attrs={}){
+  const el = makeEl('text',{x,y,...attrs});
+  el.textContent = content;
+  return el;
+}
+
+// Background
+const bg = makeEl('rect',{x:0,y:0,width:totalW,height:totalH,fill:'#10101a'});
+svg.appendChild(bg);
+
+// Grid background subtle lines
+for(let c=0;c<COLS.length;c++){
+  const cx = PAD_LEFT + c * COL_W + COL_W/2;
+  const colBg = makeEl('rect',{
+    x: PAD_LEFT + c*COL_W + 2,
+    y: PAD_TOP - 10,
+    width: COL_W - 4,
+    height: totalH - PAD_TOP + 10,
+    fill: c%2===0 ? 'rgba(255,255,255,0.008)' : 'rgba(0,0,0,0)',
+  });
+  svg.appendChild(colBg);
+}
+
+// ─── COLUMN HEADERS ───
+for(let c=0;c<COLS.length;c++){
+  const col = COLS[c];
+  const cx = PAD_LEFT + c*COL_W + COL_W/2;
+  
+  const hdr = makeEl('g');
+  
+  // Top accent line
+  hdr.appendChild(makeEl('line',{
+    x1: PAD_LEFT + c*COL_W + 8, y1: 10,
+    x2: PAD_LEFT + (c+1)*COL_W - 8, y2: 10,
+    stroke: col.color, 'stroke-width': 1.5,
+  }));
+  
+  // Col BG
+  hdr.appendChild(makeEl('rect',{
+    x: PAD_LEFT + c*COL_W + 1,
+    y: 12,
+    width: COL_W - 2,
+    height: HEADER_H - 2,
+    fill: `${col.color}18`,
+  }));
+  
+  // Chinese label
+  const t1 = makeEl('text',{
+    x: cx, y: 32,
+    'text-anchor':'middle',
+    'font-family':'Noto Serif TC, serif',
+    'font-size':'13',
+    'font-weight':'700',
+    fill: col.color,
+    'letter-spacing':'0.05em',
+  });
+  t1.textContent = col.zh;
+  hdr.appendChild(t1);
+  
+  // English label
+  const t2 = makeEl('text',{
+    x: cx, y: 46,
+    'text-anchor':'middle',
+    'font-family':'Courier Prime, monospace',
+    'font-size':'9',
+    fill: col.color,
+    opacity: '0.6',
+    'letter-spacing':'0.08em',
+  });
+  t2.textContent = col.en;
+  hdr.appendChild(t2);
+  
+  svg.appendChild(hdr);
+}
+
+// ─── TIME AXIS (left side) ───
+const axisX = 60;
+const axisLineEl = makeEl('line',{
+  x1:axisX, y1: PAD_TOP+5,
+  x2:axisX, y2: totalH-20,
+  stroke:'#1e1e28', 'stroke-width':1,
+});
+svg.appendChild(axisLineEl);
+
+// ─── ERAS + NODES ───
+let allCardData = [];
+
+for(let ei=0;ei<ERAS.length;ei++){
+  const era = ERAS[ei];
+  const ey = PAD_TOP + ei*ERA_H;
+  
+  // Era horizontal separator
+  const sepLine = makeEl('line',{
+    x1: 0, y1: ey,
+    x2: totalW, y2: ey,
+    stroke: '#1a1a24',
+    'stroke-width': ei===0?0:1,
+  });
+  svg.appendChild(sepLine);
+  
+  // Era colored accent
+  const accentLine = makeEl('line',{
+    x1: 20, y1: ey + 2,
+    x2: 108, y2: ey + 2,
+    stroke: era.color,
+    'stroke-width': 1.5,
+    opacity: '0.6',
+  });
+  svg.appendChild(accentLine);
+  
+  // Era year
+  const eraYearG = makeEl('g',{transform: `translate(${axisX}, ${ey + ERA_H/2})`});
+  const yearRotate = makeEl('g',{transform:'rotate(-90)'});
+  const yearTxt = makeEl('text',{
+    x:0, y:0,
+    'text-anchor':'middle',
+    'dominant-baseline':'middle',
+    'font-family':'Courier Prime, monospace',
+    'font-size':'10',
+    'letter-spacing':'0.15em',
+    fill: era.color,
+  });
+  yearTxt.textContent = era.en;
+  yearRotate.appendChild(yearTxt);
+  eraYearG.appendChild(yearRotate);
+  svg.appendChild(eraYearG);
+  
+  // Era title
+  const eraTitleTxt = makeEl('text',{
+    x:20, y: ey+16,
+    'font-family':'Courier Prime, monospace',
+    'font-size':'7.5',
+    'letter-spacing':'0.1em',
+    fill: era.color,
+    opacity:'0.7',
+  });
+  // Truncate long era names
+  eraTitleTxt.textContent = era.zh.length > 10 ? era.zh.substring(0,10)+'…' : era.zh;
+  svg.appendChild(eraTitleTxt);
+  
+  // Era dot
+  svg.appendChild(makeEl('circle',{
+    cx: axisX, cy: ey + ERA_H/2,
+    r:3, fill: era.color, opacity:'0.6',
+  }));
+  
+  // ─── NODES per column ───
+  for(let c=0;c<COLS.length;c++){
+    const col = COLS[c];
+    const cx = PAD_LEFT + c*COL_W + COL_W/2;
+    const nodes = era.nodes[col.id] || [];
+    
+    for(let ni=0;ni<nodes.length;ni++){
+      const node = nodes[ni];
+      const ny = ey + 30 + ni * NODE_SPACING;
+      if(ny > ey + ERA_H - 20) continue;
+      
+      const cardId = `${era.id}_${col.id}_${ni}`;
+      allCardData.push({
+        id: cardId, cx, ny,
+        col, era, node,
+      });
+      
+      // ─── DRAW NODE ───
+      const g = makeEl('g',{
+        class:'node-g',
+        'data-card':cardId,
+        cursor:'pointer',
+        transform:`translate(${cx},${ny})`,
+      });
+      
+      // Connector from col center vertical line
+      if(ni>0){
+        g.appendChild(makeEl('line',{
+          x1:0, y1:-NODE_SPACING+18,
+          x2:0, y2:-18,
+          stroke:col.color,
+          'stroke-width':'0.5',
+          opacity:'0.3',
+          'stroke-dasharray':'2 3',
+        }));
+      }
+      
+      // Node shape
+      const s = node.shape;
+      if(s==='diamond'){
+        g.appendChild(makeEl('polygon',{
+          points:'0,-16 16,0 0,16 -16,0',
+          fill:`${col.color}20`,
+          stroke:col.color,
+          'stroke-width':'1',
+        }));
+        g.appendChild(makeEl('polygon',{
+          points:'0,-10 10,0 0,10 -10,0',
+          fill:`${col.color}40`,
+          stroke:'none',
+        }));
+      } else if(s==='circle'){
+        g.appendChild(makeEl('circle',{r:15,fill:`${col.color}18`,stroke:col.color,'stroke-width':'1'}));
+        g.appendChild(makeEl('circle',{r:8,fill:`${col.color}40`,stroke:'none'}));
+      } else if(s==='triangle'){
+        g.appendChild(makeEl('polygon',{
+          points:'0,-16 15,12 -15,12',
+          fill:`${col.color}18`,stroke:col.color,'stroke-width':'1',
+        }));
+      } else if(s==='hexagon'){
+        const hex = [...Array(6)].map((_,i)=>{
+          const a=i*60*Math.PI/180;
+          return `${(12*Math.sin(a)).toFixed(1)},${(-12*Math.cos(a)).toFixed(1)}`;
+        }).join(' ');
+        g.appendChild(makeEl('polygon',{
+          points:hex,fill:`${col.color}18`,stroke:col.color,'stroke-width':'1',
+        }));
+      } else { // square
+        g.appendChild(makeEl('rect',{
+          x:-10,y:-10,width:20,height:20,
+          fill:`${col.color}18`,stroke:col.color,'stroke-width':'1',
+        }));
+      }
+      
+      // Node label (wrap short)
+      const label = node.zh.length > 8 ? node.zh.substring(0,8) : node.zh;
+      const lbl = makeEl('text',{
+        x:0, y:28,
+        'text-anchor':'middle',
+        'font-family':'Noto Sans TC, sans-serif',
+        'font-size':'9.5',
+        fill:'#b0ac9e',
+        'letter-spacing':'0.02em',
+      });
+      lbl.textContent = label;
+      g.appendChild(lbl);
+      
+      // Hover/click ripple circle
+      const ripple = makeEl('circle',{
+        r:16, fill:'transparent',
+        stroke:col.color,
+        'stroke-width':'0',
+        opacity:'0',
+        class:'node-ripple',
+      });
+      g.appendChild(ripple);
+      
+      // Interaction
+      g.addEventListener('mouseenter', ()=>{
+        ripple.setAttribute('opacity','0.3');
+        ripple.setAttribute('stroke-width','1');
+      });
+      g.addEventListener('mouseleave', ()=>{
+        ripple.setAttribute('opacity','0');
+        ripple.setAttribute('stroke-width','0');
+      });
+      g.addEventListener('click', ()=> openPanel(cardId));
+      
+      svg.appendChild(g);
+    }
+  }
+}
+
+// ─── Era connector dots on axis ───
+for(let ei=1;ei<ERAS.length;ei++){
+  const ey = PAD_TOP + ei*ERA_H;
+  svg.appendChild(makeEl('line',{
+    x1:axisX, y1: ey - ERA_H/2 + 10,
+    x2:axisX, y2: ey - 10,
+    stroke:'#1e1e28','stroke-width':'1',
+    'stroke-dasharray':'2 4',
+  }));
+}
+
+// ═══════════════════════════════════════════════
+// PANEL LOGIC
+// ═══════════════════════════════════════════════
+const SHAPE_SVG = {
+  diamond: `<polygon points="40,10 70,40 40,70 10,40" fill="FILL18" stroke="COL" stroke-width="1.5"/>
+            <polygon points="40,22 58,40 40,58 22,40" fill="FILL40" stroke="none"/>
+            <circle cx="40" cy="40" r="5" fill="COL" opacity="0.6"/>`,
+  circle: `<circle cx="40" cy="40" r="30" fill="FILL18" stroke="COL" stroke-width="1.5"/>
+            <circle cx="40" cy="40" r="18" fill="FILL30" stroke="COL" stroke-width="0.5" stroke-dasharray="3 3"/>
+            <circle cx="40" cy="40" r="6" fill="COL" opacity="0.7"/>`,
+  triangle: `<polygon points="40,8 72,64 8,64" fill="FILL18" stroke="COL" stroke-width="1.5"/>
+              <polygon points="40,24 62,60 18,60" fill="FILL30" stroke="none"/>`,
+  hexagon: `<polygon points="40,10 64,25 64,55 40,70 16,55 16,25" fill="FILL18" stroke="COL" stroke-width="1.5"/>
+             <polygon points="40,22 56,31 56,49 40,58 24,49 24,31" fill="FILL30" stroke="none"/>`,
+  square: `<rect x="10" y="10" width="60" height="60" fill="FILL18" stroke="COL" stroke-width="1.5"/>
+            <rect x="20" y="20" width="40" height="40" fill="FILL30" stroke="COL" stroke-width="0.5" stroke-dasharray="2 2"/>
+            <rect x="34" y="34" width="12" height="12" fill="COL" opacity="0.5"/>`,
+};
+
+function openPanel(cardId){
+  const card = allCardData.find(c=>c.id===cardId);
+  if(!card) return;
+  const {col,era,node} = card;
+  
+  document.getElementById('panel-band').style.background = col.color;
+  document.getElementById('panel-col').style.color = col.color;
+  document.getElementById('panel-col').textContent = `${col.zh}  /  ${col.en}`;
+  document.getElementById('panel-era').textContent = `${era.zh}　${era.en}`;
+  document.getElementById('panel-title').textContent = node.zh;
+  document.getElementById('panel-en').textContent = node.en;
+  document.getElementById('panel-desc').textContent = node.desc;
+  
+  // Shape icon
+  const shapeSvg = (SHAPE_SVG[node.shape]||SHAPE_SVG.diamond)
+    .replace(/COL/g, col.color)
+    .replace(/FILL18/g, col.color+'30')
+    .replace(/FILL30/g, col.color+'50')
+    .replace(/FILL40/g, col.color+'60');
+  document.getElementById('panel-svg-icon').innerHTML = shapeSvg;
+  
+  // Facts
+  const factsEl = document.getElementById('panel-facts');
+  factsEl.innerHTML = '';
+  if(node.facts){
+    node.facts.forEach(([lbl,val])=>{
+      factsEl.innerHTML += `<div class="pfact"><div class="pfact-lbl">${lbl}</div><div class="pfact-val">${val}</div></div>`;
+    });
+  }
+  
+  // Connections
+  const connEl = document.getElementById('panel-connections');
+  connEl.innerHTML = '';
+  if(node.links && node.links.length){
+    connEl.innerHTML = `<div class="pconn-lbl">⟶ 關聯概念</div><div class="pconn-wrap">`;
+    node.links.forEach(l=>{
+      connEl.innerHTML += `<span class="pconn">${l}</span>`;
+    });
+    connEl.innerHTML += '</div>';
+  }
+  
+  document.getElementById('panel').classList.add('open');
+}
+
+function closePanel(){
+  document.getElementById('panel').classList.remove('open');
+}
+
+// Click outside panel to close
+document.getElementById('stage').addEventListener('click', e=>{
+  if(!e.target.closest('.node-g') && !e.target.closest('#panel')){
+    closePanel();
+  }
+});
+
+// ─── DRAG TO PAN ───
+let isDragging=false, startX=0, startY=0, scrollLeft=0, scrollTop=0;
+const stage = document.getElementById('stage');
+stage.addEventListener('mousedown', e=>{
+  if(e.target.closest('.node-g')) return;
+  isDragging=true;
+  startX=e.pageX-stage.offsetLeft;
+  startY=e.pageY-stage.offsetTop;
+  scrollLeft=stage.scrollLeft;
+  scrollTop=stage.scrollTop;
+});
+document.addEventListener('mouseup', ()=>isDragging=false);
+document.addEventListener('mousemove', e=>{
+  if(!isDragging) return;
+  e.preventDefault();
+  const x=e.pageX-stage.offsetLeft;
+  const y=e.pageY-stage.offsetTop;
+  stage.scrollLeft=scrollLeft-(x-startX);
+  stage.scrollTop=scrollTop-(y-startY);
+});
+
+// ─── Initial scroll to center ───
+window.addEventListener('load', ()=>{
+  stage.scrollLeft = 0;
+  stage.scrollTop = 0;
+});
+</script>
 </body>
 </html>
